@@ -1,0 +1,244 @@
+{% extends "LocalCA/base.html" %}
+
+{% block content %}
+<!-- Root CA Section -->
+<div class="container-fluid mb-4">
+    <h2 class="mb-3">Root Certificate Authority</h2>
+    <div class="row">
+        <!-- Left Section - Create Root Form -->
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Create Root CA</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="root">
+                        
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }}">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+
+                        <div class="mb-4">
+                            <label for="ca_name" class="form-label fw-bold">Root CA Name</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="ca_name" 
+                                   name="ca_name" 
+                                   required 
+                                   placeholder="e.g., MyCompany Root CA">
+                            <div class="form-text">Enter a unique name for your Root CA</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="validity_days" class="form-label fw-bold">Validity Period (days)</label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="validity_days" 
+                                   name="validity_days" 
+                                   required 
+                                   value="3650"
+                                   min="1" 
+                                   max="7300">
+                            <div class="form-text">Number of days the certificate will be valid (1-7300 days)</div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">Create Root CA</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Section - Existing Root CAs -->
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h4 class="mb-0">Existing Root CAs</h4>
+                </div>
+                <div class="card-body">
+                    {% if existing_roots %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Created</th>
+                                        <th>Expires</th>
+                                        <th>Owner</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for root in existing_roots %}
+                                        <tr>
+                                            <td class="text-break">{{ root.name }}</td>
+                                            <td>{{ root.created_at|date:"Y-m-d" }}</td>
+                                            <td>{{ root.valid_until|date:"Y-m-d" }}</td>
+                                            <td>
+                                                {% if root.created_by == request.user %}
+                                                    <span class="badge bg-success">You</span>
+                                                {% else %}
+                                                    {{ root.created_by.username }}
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            No root CAs exist yet. Create your first one!
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Intermediate CA Section -->
+<div class="container-fluid">
+    <h2 class="mb-3">Intermediate Certificate Authority</h2>
+    <div class="row">
+        <!-- Left Section - Create Intermediate Form -->
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">Create Intermediate CA</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="intermediate">
+
+                        <div class="mb-4">
+                            <label for="intermediate_name" class="form-label fw-bold">Intermediate CA Name</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="intermediate_name" 
+                                   name="intermediate_name" 
+                                   required 
+                                   placeholder="e.g., MyCompany Intermediate CA">
+                            <div class="form-text">Enter a unique name for your Intermediate CA</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="root_id" class="form-label fw-bold">Signing Root CA</label>
+                            <select class="form-select form-select-lg" id="root_id" name="root_id" required>
+                                <option value="">Select a Root CA</option>
+                                {% if user_roots %}
+                                    {% for root in user_roots %}
+                                        <option value="{{ root.id }}">{{ root.name }}</option>
+                                    {% endfor %}
+                                {% endif %}
+                            </select>
+                            {% if not user_roots %}
+                                <div class="form-text text-danger">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    You need to create a root certificate first before creating an intermediate.
+                                </div>
+                            {% else %}
+                                <div class="form-text">
+                                    Select one of your root CAs to sign this intermediate certificate
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="intermediate_validity_days" class="form-label fw-bold">Validity Period (days)</label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="intermediate_validity_days" 
+                                   name="validity_days" 
+                                   required 
+                                   value="1825"
+                                   min="1" 
+                                   max="3650">
+                            <div class="form-text">Number of days the certificate will be valid (max 3650 days)</div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-info btn-lg text-white" {% if not user_roots %}disabled{% endif %}>
+                                Create Intermediate CA
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Section - Existing Intermediate CAs -->
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h4 class="mb-0">Existing Intermediate CAs</h4>
+                </div>
+                <div class="card-body">
+                    {% if existing_intermediates %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Signed By</th>
+                                        <th>Created</th>
+                                        <th>Expires</th>
+                                        <th>Owner</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for intermediate in existing_intermediates %}
+                                        <tr>
+                                            <td class="text-break">{{ intermediate.name }}</td>
+                                            <td>{{ intermediate.signed_by_root.name }}</td>
+                                            <td>{{ intermediate.created_at|date:"Y-m-d" }}</td>
+                                            <td>{{ intermediate.valid_until|date:"Y-m-d" }}</td>
+                                            <td>
+                                                {% if intermediate.created_by == request.user %}
+                                                    <span class="badge bg-success">You</span>
+                                                {% else %}
+                                                    {{ intermediate.created_by.username }}
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            No intermediate CAs exist yet. Create your first one!
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 8px;
+    }
+    .card-header {
+        border-radius: 7px 7px 0 0 !important;
+    }
+    .table-responsive {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    .table thead th {
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 1;
+    }
+</style>
+{% endblock %}

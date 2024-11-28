@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Intermediate Certificate Authority</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Create Intermediate Certificate Authority</h1>
+        <p class="text-muted text-center">Fill in the details below to create an intermediate certificate signed by a root CA.</p>
+
+        {% if messages %}
+            <div class="mt-3">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="POST" action="{% url 'create_intermediate' %}" class="mt-4">
+            {% csrf_token %}
+            
+            <!-- Intermediate Name -->
+            <div class="mb-3">
+                <label for="intermediate_name" class="form-label">Intermediate Certificate Name</label>
+                <input type="text" name="intermediate_name" id="intermediate_name" class="form-control" placeholder="Enter intermediate CA name" required>
+            </div>
+
+            <!-- Validity Period -->
+            <div class="mb-3">
+                <label for="validity_days" class="form-label">Validity Period (in Days)</label>
+                <input type="number" name="validity_days" id="validity_days" class="form-control" placeholder="Enter validity period (e.g., 3650 for 10 years)" required>
+            </div>
+
+            <!-- Root CA Selection -->
+            <div class="mb-3">
+                <label for="root_id" class="form-label">Select Root Certificate</label>
+                <select name="root_id" id="root_id" class="form-select" required>
+                    {% for root in roots %}
+                        <option value="{{ root.id }}">{{ root.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary">Create Intermediate CA</button>
+        </form>
+
+        <!-- Back Button -->
+        <div class="mt-3">
+            <a href="{% url 'home' %}" class="btn btn-secondary">Back to Home</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

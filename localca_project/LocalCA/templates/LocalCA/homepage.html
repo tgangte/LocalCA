@@ -1,0 +1,130 @@
+{% extends "LocalCA/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Certificate Hierarchy</h2>
+    
+    {% for tree in certificate_tree %}
+        <div class="card mb-4">
+            <!-- Root Certificate -->
+            <div class="card-header {% if tree.is_owner %}bg-success{% else %}bg-primary{% endif %} text-white">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="mb-0">
+                            Root: {{ tree.root.name }}
+                            {% if tree.is_owner %}<span class="badge bg-light text-dark">Created by you</span>{% endif %}
+                        </h5>
+                    </div>
+                    <div class="col-auto">
+                        <a href="{% url 'download' tree.root.serial_number %}" class="btn btn-sm btn-light me-2">
+                            Download Public Key
+                        </a>
+                        {% if tree.is_owner %}
+                            <a href="{% url 'download_private' tree.root.serial_number %}" class="btn btn-sm btn-warning">
+                                Download Private Key
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="small mt-2">
+                    Serial: {{ tree.root.serial_number }} | 
+                    Created: {{ tree.root.created_at }} | 
+                    Expires: {{ tree.root.valid_until }}
+                </div>
+            </div>
+
+            <div class="card-body">
+                {% for intermediate_data in tree.intermediates %}
+                    <!-- Intermediate Certificate -->
+                    <div class="card ms-4 mb-3">
+                        <div class="card-header {% if intermediate_data.is_owner %}bg-info-subtle{% else %}bg-info{% endif %}">
+                            <div class="row align-items-center">
+                                <div class="col">
+                                    <h6 class="mb-0">
+                                        Intermediate: {{ intermediate_data.intermediate.name }}
+                                        {% if intermediate_data.is_owner %}<span class="badge bg-success">Created by you</span>{% endif %}
+                                    </h6>
+                                </div>
+                                <div class="col-auto">
+                                    <a href="{% url 'download' intermediate_data.intermediate.serial_number %}" class="btn btn-sm btn-light me-2">
+                                        Download Public Key
+                                    </a>
+                                    {% if intermediate_data.is_owner %}
+                                        <a href="{% url 'download_private' intermediate_data.intermediate.serial_number %}" class="btn btn-sm btn-warning">
+                                            Download Private Key
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="small mt-2">
+                                Serial: {{ intermediate_data.intermediate.serial_number }} | 
+                                Created: {{ intermediate_data.intermediate.created_at }} | 
+                                Expires: {{ intermediate_data.intermediate.valid_until }}
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+                            {% for leaf in intermediate_data.leaves %}
+                                <!-- Leaf Certificate -->
+                                <div class="card ms-4 mb-2">
+                                    <div class="card-header {% if leaf.is_owner %}bg-light-subtle{% else %}bg-light{% endif %}">
+                                        <div class="row align-items-center">
+                                            <div class="col">
+                                                <h6 class="mb-0">
+                                                    Leaf: {{ leaf.cert.common_name }}
+                                                    {% if leaf.is_owner %}<span class="badge bg-success">Created by you</span>{% endif %}
+                                                </h6>
+                                            </div>
+                                            <div class="col-auto">
+                                                <a href="{% url 'download' leaf.cert.serial_number %}" class="btn btn-sm btn-secondary me-2">
+                                                    Download Public Chain
+                                                </a>
+                                                {% if leaf.is_owner %}
+                                                    <a href="{% url 'download_private' leaf.cert.serial_number %}" class="btn btn-sm btn-warning">
+                                                        Download Private Key
+                                                    </a>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="small mt-2">
+                                            Serial: {{ leaf.cert.serial_number }} | 
+                                            Created: {{ leaf.cert.created_at }} | 
+                                            Expires: {{ leaf.cert.valid_until }}
+                                        </div>
+                                        <div class="small mt-1 text-muted">
+                                            SAN: {{ leaf.cert.san }}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+
+    {% if not certificate_tree %}
+        <div class="alert alert-info">
+            No certificates available to display.
+        </div>
+    {% endif %}
+</div>
+
+<!-- Include Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Include Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<style>
+    .card {
+        border-radius: 8px;
+    }
+    .card-header {
+        border-radius: 7px 7px 0 0 !important;
+    }
+    .btn {
+        white-space: nowrap;
+    }
+</style>
+{% endblock %} 

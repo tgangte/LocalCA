@@ -1,0 +1,171 @@
+{% extends "LocalCA/base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-3">Leaf Certificates</h2>
+    <div class="row">
+        <!-- Left Section - Create Leaf Form -->
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">Create Leaf Certificate</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }}">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+
+                        <!-- Common Name -->
+                        <div class="mb-4">
+                            <label for="common_name" class="form-label fw-bold">Common Name</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="common_name" 
+                                   name="common_name" 
+                                   required 
+                                   placeholder="e.g., example.com">
+                            <div class="form-text">The primary domain name for this certificate</div>
+                        </div>
+
+                        <!-- Subject Alternative Names -->
+                        <div class="mb-4">
+                            <label for="san" class="form-label fw-bold">Subject Alternative Names</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="san" 
+                                   name="san" 
+                                   placeholder="e.g., www.example.com, api.example.com">
+                            <div class="form-text">Additional domain names, separated by commas</div>
+                        </div>
+
+                        <!-- Signing Intermediate -->
+                        <div class="mb-4">
+                            <label for="intermediate_id" class="form-label fw-bold">Signing Intermediate CA</label>
+                            <select class="form-select form-select-lg" id="intermediate_id" name="intermediate_id" required>
+                                <option value="">Select an Intermediate CA</option>
+                                {% if intermediates %}
+                                    {% for intermediate in intermediates %}
+                                        <option value="{{ intermediate.id }}">{{ intermediate.name }}</option>
+                                    {% endfor %}
+                                {% endif %}
+                            </select>
+                            {% if not intermediates %}
+                                <div class="form-text text-danger">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    No intermediate certificates available. Please create one first from the "Create CA" page.
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Validity Period -->
+                        <div class="mb-4">
+                            <label for="validity_days" class="form-label fw-bold">Validity Period (days)</label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="validity_days" 
+                                   name="validity_days" 
+                                   required 
+                                   value="365"
+                                   min="1" 
+                                   max="825">
+                            <div class="form-text">Number of days the certificate will be valid (max 825 days)</div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg" {% if not intermediates %}disabled{% endif %}>
+                                Create Leaf Certificate
+                            </button>
+                            <a href="{% url 'homepage' %}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Section - Existing Leaf Certificates -->
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h4 class="mb-0">Existing Leaf Certificates</h4>
+                </div>
+                <div class="card-body">
+                    {% if existing_leaves %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Common Name</th>
+                                        <th>Signed By</th>
+                                        <th>Created</th>
+                                        <th>Expires</th>
+                                        <th>Owner</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for leaf in existing_leaves %}
+                                        <!-- Main certificate row -->
+                                        <tr>
+                                            <td class="text-break">{{ leaf.common_name }}</td>
+                                            <td>{{ leaf.signed_by_intermediate.name }}</td>
+                                            <td>{{ leaf.created_at|date:"Y-m-d" }}</td>
+                                            <td>{{ leaf.valid_until|date:"Y-m-d" }}</td>
+                                            <td>
+                                                {% if leaf.created_by == request.user %}
+                                                    <span class="badge bg-success">You</span>
+                                                {% else %}
+                                                    {{ leaf.created_by.username }}
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <!-- SANs row -->
+                                        {% if leaf.san %}
+                                        <tr class="sans-row">
+                                            <td colspan="5" class="text-muted small">
+                                                <div class="ps-4">
+                                                    <strong>SANs:</strong> {{ leaf.san }}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            No leaf certificates exist yet. Create your first one!
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table-responsive {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    .table thead th {
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 1;
+    }
+    .sans-row {
+        background-color: #f8f9fa;  /* Light gray background */
+    }
+    .sans-row td {
+        border-top: none;  /* Remove top border for SANs row */
+        padding-top: 0;    /* Reduce padding for tighter grouping */
+    }
+</style>
+{% endblock %}

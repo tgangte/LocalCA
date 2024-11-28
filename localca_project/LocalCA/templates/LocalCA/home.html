@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block content %}
+   
+
+        <!-- Root Certificates Section -->
+        <div class="mt-4">
+            <h2>Root Certificates</h2>
+            {% if certificates.roots %}
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Serial Number</th>
+                            <th>Valid Until</th>
+                            <th>Public Key</th>
+                            <th>Private Key</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for root in certificates.roots %}
+                            <tr>
+                                <td>{{ root.name }}</td>
+                                <td>{{ root.serial_number }}</td>
+                                <td>{{ root.valid_until }}</td>
+                                <td><pre style="max-height: 200px; overflow-y: auto;">{{ root.public_key }}</pre></td>
+                                <td><button onclick="downloadKey('{{ root.private_key_encrypted }}', '{{ root.name }}_private_key.pem')" class="btn btn-primary btn-sm">Download Private Key</button></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No root certificates available.</p>
+            {% endif %}
+        </div>
+
+        <!-- Intermediate Certificates Section -->
+        <div class="mt-5">
+            <h2>Intermediate Certificates</h2>
+            {% if certificates.intermediates %}
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Signed By (Root)</th>
+                            <th>Serial Number</th>
+                            <th>Valid Until</th>
+                            <th>Public Key</th>
+                            <th>Private Key</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for intermediate in certificates.intermediates %}
+                            <tr>
+                                <td>{{ intermediate.name }}</td>
+                                <td>{{ intermediate.signed_by_root.name }}</td>
+                                <td>{{ intermediate.serial_number }}</td>
+                                <td>{{ intermediate.valid_until }}</td>
+                                <td><pre style="max-height: 200px; overflow-y: auto;">{{ intermediate.public_key }}</pre></td>
+                                <td><button onclick="downloadKey('{{ intermediate.private_key_encrypted }}', '{{ intermediate.name }}_private_key.pem')" class="btn btn-primary btn-sm">Download Private Key</button></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No intermediate certificates available.</p>
+            {% endif %}
+        </div>
+
+        <!-- Leaf Certificates Section -->
+        <div class="mt-5">
+            <h2>Leaf Certificates</h2>
+            {% if certificates.leaves %}
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Common Name (CN)</th>
+                            <th>SANs</th>
+                            <th>Signed By (Intermediate)</th>
+                            <th>Serial Number</th>
+                            <th>Valid Until</th>
+                            <th>Public Key</th>
+                            <th>Private Key</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for leaf in certificates.leaves %}
+                            <tr>
+                                <td>{{ leaf.common_name }}</td>
+                                <td>{{ leaf.san }}</td>
+                                <td>{{ leaf.signed_by_intermediate.name }}</td>
+                                <td>{{ leaf.serial_number }}</td>
+                                <td>{{ leaf.valid_until }}</td>
+                                <td><pre style="max-height: 200px; overflow-y: auto;">{{ leaf.public_key }}</pre></td>
+                                <!-- Download Private Key Button -->
+                                <td><button onclick="downloadKey('{{ leaf.private_key_encrypted }}', '{{ leaf.common_name }}_private_key.pem')" class="btn btn-primary btn-sm">Download Private Key</button></td> 
+                            </tr> 
+                        {% endfor %} 
+                    </tbody> 
+                </table> 
+            {% else %} 
+                <p>No leaf certificates available.</p> 
+            {% endif %} 
+        </div>
+
+        <!-- Back Button -->
+        <div class='mt-4 text-center'>
+            <a href="{% url 'homepage' %}" class='btn btn-secondary'>Back to Public Homepage</a> 
+        </div>
+
+    </div>
+
+    <!-- Include Bootstrap JS -->
+    <script src='https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js'></script>
+
+    <!-- JavaScript for Downloading Private Keys -->
+    <script type='text/javascript'>
+        function downloadKey(privateKey, filename) {
+            // Create a Blob object with the private key
+            const blob = new Blob([privateKey], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+
+            // Create a temporary anchor element to trigger the download
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = filename;
+
+            // Append the anchor to the body and trigger the click event
+            document.body.appendChild(a);
+            a.click();
+
+            // Clean up
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+    </script>
+
+    {% endblock %}
