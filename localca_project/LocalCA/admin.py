@@ -1,3 +1,7 @@
+'''
+This module contains the admin configuration for the LocalCA application.
+'''
+
 from django.contrib import admin
 
 from .models import RootCertificate, IntermediateCertificate, LeafCertificate, RevokedCertificate, AuditLog
