@@ -14,6 +14,7 @@ python manage.py makemigrations LocalCA
 
 python manage.py migrate
 
-python manage.py createsuperuser
+python manage.py initadmin
+
 python manage.py runserver
 ```
