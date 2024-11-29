@@ -5,7 +5,7 @@ Local Certificate Authority
 
 ### Development steps
 ```
-
+cd localca_project
 python -m venv venv
 source venv/bin/activate
 cd localca_project
