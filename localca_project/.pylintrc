@@ -5,4 +5,4 @@ max-line-length = 150
 max-locals = 20
 
 [MESSAGES CONTROL]
-disable=no-member
+disable=no-member,R0913,R0917

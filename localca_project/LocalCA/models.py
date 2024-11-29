@@ -1,11 +1,15 @@
-from django.db import models
+'''
+This module contains the models for the LocalCA application.
+'''
 
-# Create your models here.
 from django.db import models
 from django.contrib.auth.models import User
 
 
 class RootCertificate(models.Model):
+    """
+    This class represents the root certificate.
+    """
     created_by = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
@@ -24,6 +28,9 @@ class RootCertificate(models.Model):
 
 
 class IntermediateCertificate(models.Model):
+    """
+    This class represents the intermediate certificate.
+    """
     created_by = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
@@ -44,6 +51,9 @@ class IntermediateCertificate(models.Model):
 
 
 class LeafCertificate(models.Model):
+    '''
+    This class represents the leaf certificate.
+    '''
     created_by = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
@@ -65,6 +75,9 @@ class LeafCertificate(models.Model):
 
 
 class RevokedCertificate(models.Model):
+    '''
+    This class represents the revoked certificate.
+    '''
     created_by = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
@@ -80,6 +93,9 @@ class RevokedCertificate(models.Model):
 
 
 class AuditLog(models.Model):
+    '''
+    This class represents the audit log.
+    '''
     ACTION_CHOICES = [
         ('CREATE', 'Create'),
         ('REVOKE', 'Revoke'),

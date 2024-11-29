@@ -1,12 +1,17 @@
+'''
+This module contains the CertificateAuthority class, which is used to generate
+root, intermediate, and leaf certificates.
+'''
+
 import logging
+import ipaddress
 from datetime import datetime, timedelta
 from cryptography import x509
 from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.backends import default_backend
-from typing import Dict, List
-import ipaddress
+
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +99,7 @@ class CertificateAuthority:
         root_cert = x509.load_pem_x509_certificate(
             root_public_key.encode(), default_backend())
 
-        cert = self.sign_csr(csr, root_cert, root_private_key)
+        cert = self.sign_csr(csr, validity_days, root_cert, root_private_key)
 
         return {
             "serial_number": cert.serial_number,
@@ -196,6 +201,7 @@ class CertificateAuthority:
     def sign_csr(
             self,
             csr: x509.CertificateSigningRequest,
+            validity_days: int,
             ca_cert: x509.Certificate,
             ca_private_key: str) -> x509.Certificate:
         """
@@ -215,7 +221,7 @@ class CertificateAuthority:
         ).not_valid_before(
             datetime.utcnow()
         ).not_valid_after(
-            datetime.utcnow() + timedelta(days=3650)
+            datetime.utcnow() + timedelta(days=validity_days)
         ).add_extension(
             x509.BasicConstraints(ca=True, path_length=None), critical=True,
         )

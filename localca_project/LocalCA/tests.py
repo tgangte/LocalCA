@@ -1,5 +1,8 @@
-from django.test import TestCase
+'''
+This module contains the tests for the CertificateAuthority class.
+'''
 from datetime import datetime, timedelta
+from django.test import TestCase
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import rsa
 from django.utils import timezone
@@ -7,6 +10,10 @@ from .ca import CertificateAuthority
 
 
 class CertificateAuthorityTests(TestCase):
+    """
+    This class contains the tests for the CertificateAuthority class.
+    """
+
     def setUp(self):
         self.ca = CertificateAuthority()
         self.common_name = "Test CA"

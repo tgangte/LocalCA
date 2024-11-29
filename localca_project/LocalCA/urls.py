@@ -1,4 +1,8 @@
-from django.urls import path, include
+'''
+This module contains the URL patterns for the LocalCA application.
+'''
+
+from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
 
