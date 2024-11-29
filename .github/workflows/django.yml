@@ -27,4 +27,4 @@ jobs:
         pip install -r requirements.txt
     - name: Run Custom Tests
       run: |
-        python manage.py test
+        python localca_project/manage.py test
