@@ -8,3 +8,15 @@ services:
       - "8000:8000"
     volumes:
       - ./localca_project:/app
+
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./localca_project:/app
+    depends_on:
+      - web
+

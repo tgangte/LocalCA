@@ -9,7 +9,7 @@ ENV PYTHONUNBUFFERED 1
 WORKDIR /app
 
 # Copy the requirements file into the container
-COPY localca_project/requirements.txt /app/
+COPY requirements.txt /app/
 
 # Install dependencies
 RUN pip install --upgrade pip && pip install -r requirements.txt
