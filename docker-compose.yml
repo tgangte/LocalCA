@@ -3,7 +3,7 @@ version: '3.8'
 services:
   web:
     build: .
-    command: sh -c "python manage.py runserver 0.0.0.0:8000"
+    command: sh -c "gunicorn localca_project.wsgi --bind 0.0.0.0:8000 --worker-class=gthread --threads=4"
     ports:
       - "8000:8000"
     volumes:

@@ -18,3 +18,14 @@ python manage.py initadmin
 
 python manage.py runserver
 ```
+
+
+#Deploy using docker
+
+```
+git clone this repo
+
+cd into  the directory that contains the docker-compose.yml file
+sudo docker compose up --build
+
+```
