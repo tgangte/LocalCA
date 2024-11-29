@@ -1,7 +1,14 @@
+"""Views for the LocalCA application handling certificate operations."""
+
+from datetime import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, Http404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth import logout
 from .models import (
     RootCertificate,
     IntermediateCertificate,
@@ -10,11 +17,6 @@ from .models import (
     AuditLog,
 )
 from .ca import CertificateAuthority
-from datetime import datetime
-from django.core.exceptions import PermissionDenied
-from django.contrib.auth.forms import PasswordChangeForm
-from django.contrib.auth import update_session_auth_hash
-from django.contrib.auth import logout
 
 
 def homepage(request):
@@ -113,7 +115,10 @@ def download(request, serial_number):
     AuditLog.objects.create(
         action="DOWNLOAD_PUBLIC_KEY",
         performed_by=request.user if request.user.is_authenticated else None,
-        details=f"Downloaded {'certificate chain' if isinstance(cert, LeafCertificate) else 'certificate'} for: {cert_name if not isinstance(cert, LeafCertificate) else cert.common_name}",
+        details=(
+            f"Downloaded {'certificate chain' if isinstance(cert, LeafCertificate) else 'certificate'} "
+            f"for: {cert_name if not isinstance(cert, LeafCertificate) else cert.common_name}"
+        ),
     )
 
     return response
@@ -168,7 +173,7 @@ def create_ca(request):
                 messages.success(request, f"Root CA '{ca_name}' created successfully!")
                 return redirect("create")
 
-            except Exception as e:
+            except ValueError as e:
                 messages.error(request, f"Error creating root CA: {str(e)}")
 
         elif form_type == "intermediate":
@@ -224,7 +229,7 @@ def create_ca(request):
                 )
                 return redirect("create_ca")
 
-            except Exception as e:
+            except ValueError as e:
                 messages.error(request, f"Error creating intermediate CA: {str(e)}")
 
     return render(
@@ -284,7 +289,7 @@ def create_intermediate(request):
             )
             return redirect("homepage")
 
-        except Exception as e:
+        except ValueError as e:
             messages.error(request, f"Error creating intermediate CA: {str(e)}")
 
     return render(request, "LocalCA/create_intermediate.html", {"roots": roots})
@@ -346,15 +351,14 @@ def create_leaf(request):
             messages.success(
                 request, f"Leaf certificate '{common_name}' created successfully!"
             )
-            return redirect("create_leaf")
             # Log the action
             AuditLog.objects.create(
                 action="CREATE",
                 performed_by=request.user,
                 details=f"Created leaf certificate: {common_name}",
             )
-
-        except Exception as e:
+            return redirect("create_leaf")
+        except ValueError as e:
             messages.error(request, f"Error creating leaf certificate: {str(e)}")
 
     return render(
@@ -392,7 +396,7 @@ def revoke_certificate(request, cert_id):
                 request, f"Leaf certificate '{cert.common_name}' revoked successfully!"
             )
 
-    except Exception as e:
+    except ValueError as e:
         messages.error(request, f"Error revoking certificate: {str(e)}")
 
     return redirect("homepage")
@@ -443,6 +447,9 @@ def download_private(request, serial_number):
 
 @login_required
 def change_password(request):
+    """
+    View to change the user's password.
+    """
     if request.method == "POST":
         form = PasswordChangeForm(request.user, request.POST)
         if form.is_valid():
@@ -451,8 +458,6 @@ def change_password(request):
             update_session_auth_hash(request, user)
             messages.success(request, "Your password was successfully updated!")
             return redirect("homepage")
-        else:
-            messages.error(request, "Please correct the errors below.")
     else:
         form = PasswordChangeForm(request.user)
 
@@ -460,6 +465,9 @@ def change_password(request):
 
 
 def logout_view(request):
+    """
+    View to log out the user.
+    """
     logout(request)
     messages.success(request, "You have been successfully logged out.")
     return redirect("login")

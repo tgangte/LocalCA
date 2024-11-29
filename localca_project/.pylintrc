@@ -1,0 +1,8 @@
+[FORMAT]
+max-line-length = 150
+
+[design]
+max-locals = 20
+
+[MESSAGES CONTROL]
+disable=no-member
