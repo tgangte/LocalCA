@@ -24,6 +24,9 @@ RUN python manage.py makemigrations LocalCA && \
 
 #Create an admin superuser for the first time, if no user exists
 RUN python manage.py initadmin
+
+#collect static files
+RUN python manage.py collectstatic --noinput
 # Expose the port the app runs on
 EXPOSE 8000
 
