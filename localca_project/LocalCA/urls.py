@@ -14,15 +14,24 @@ urlpatterns = [
     path('create_ca/', views.create_ca, name='create_ca'),
 
     # Create intermediate certificate authority
-    path('create_intermediate/', views.create_intermediate, name='create_intermediate'),
+    path(
+        'create_intermediate/',
+        views.create_intermediate,
+        name='create_intermediate'),
 
     # Create leaf certificate
     path('create_leaf/', views.create_leaf, name='create_leaf'),
 
     # Revoke a certificate
-    path('revoke_certificate/<int:cert_id>/', views.revoke_certificate, name='revoke_certificate'),
+    path(
+        'revoke_certificate/<int:cert_id>/',
+        views.revoke_certificate,
+        name='revoke_certificate'),
 
-    path('download_private/<str:serial_number>/', views.download_private, name='download_private'),
+    path(
+        'download_private/<str:serial_number>/',
+        views.download_private,
+        name='download_private'),
 
     # Authentication URLs
     path('login/', auth_views.LoginView.as_view(
