@@ -3,9 +3,9 @@ This module contains the tests for the CertificateAuthority class.
 '''
 from datetime import datetime, timedelta
 from django.test import TestCase
+from django.utils import timezone
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import rsa
-from django.utils import timezone
 from .ca import CertificateAuthority
 
 
