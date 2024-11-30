@@ -3,11 +3,12 @@ version: '3.8'
 services:
   web:
     build: .
-    command: sh -c "gunicorn localca_project.wsgi --bind 0.0.0.0:8000 --worker-class=gthread --threads=4"
+    command: sh -c "gunicorn localca_project.wsgi --bind web:8000 --worker-class=gthread --threads=4"
     ports:
       - "8000:8000"
     volumes:
       - ./localca_project:/app
+      - static_volume:/app/staticfiles
 
   nginx:
     build:
@@ -17,6 +18,10 @@ services:
       - "80:80"
     volumes:
       - ./localca_project:/app
+      - static_volume:/app/staticfiles:ro
     depends_on:
       - web
+
+volumes:
+  static_volume:
 
