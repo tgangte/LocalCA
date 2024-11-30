@@ -171,7 +171,7 @@ def create_ca(request):
                 )
 
                 messages.success(request, f"Root CA '{ca_name}' created successfully!")
-                return redirect("create")
+                return redirect("create_ca")
 
             except ValueError as e:
                 messages.error(request, f"Error creating root CA: {str(e)}")

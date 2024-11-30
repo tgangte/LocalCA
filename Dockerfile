@@ -17,15 +17,6 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 # Copy the entire project into the container
 COPY localca_project /app/
 
-# Run migrations
-RUN python manage.py makemigrations LocalCA && \
-    python manage.py migrate && \
-    python manage.py initadmin  && \
-    python manage.py collectstatic --noinput
-
-#Above.  create an admin superuser for the first time, if no user exists
-#collect static files
-
 
 # Expose the port the app runs on
 EXPOSE 8000
