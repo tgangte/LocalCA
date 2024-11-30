@@ -3,7 +3,7 @@ version: '3.8'
 services:
   web:
     build: .
-    command: sh /app/start.sh
+    command: sh start.sh
     volumes:
       - ./localca_project:/app
       - static_volume:/app/staticfiles
