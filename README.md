@@ -7,6 +7,7 @@ Local CA - Your Own Internal Certificate Authority!
 ## Welcome to Local CA!  
 
 Local CA is an open source self-hosted certificate authority that allows you to build your own [PKI infrastructure](https://en.wikipedia.org/wiki/Public_key_infrastructure) internally or in your homelab/home network. 
+
 Say goodbye to those pesky HTTPS INSECURE  warnings when browsing your locally hosted web services! 
 You can use the intuitive python django+bootstrap based web GUI to create and download root certificates, intermediate certificates and leaf/end user certificates to secure your services. 
 
