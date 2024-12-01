@@ -1,6 +1,9 @@
 # Local CA 
 Local CA - Your Own Internal Certificate Authority 
 
+[![Pylint Tests](https://github.com/tgangte/LocalCA/actions/workflows/pylint.yml/badge.svg)](https://github.com/tgangte/LocalCA/actions/workflows/pylint.yml)
+[![Django CI](https://github.com/tgangte/LocalCA/actions/workflows/django.yml/badge.svg?branch=main)](https://github.com/tgangte/LocalCA/actions/workflows/django.yml)
+
 ## Welcome to Local CA!  
 
 Local CA is an open source self-hosted certificate authority that allows you to build your own PKI infrastructure internally or in your homelab/home network. Say goodbye to those pesky HTTPS INSECURE  warnings when accessing locally hosted web services! 
