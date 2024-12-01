@@ -1,5 +1,5 @@
 # Local CA 
-Local CA - Your Own Internal Certificate Authority 
+Local CA - Your Own Internal Certificate Authority! 
 
 [![Pylint Tests](https://github.com/tgangte/LocalCA/actions/workflows/pylint.yml/badge.svg)](https://github.com/tgangte/LocalCA/actions/workflows/pylint.yml)
 [![Django CI](https://github.com/tgangte/LocalCA/actions/workflows/django.yml/badge.svg?branch=main)](https://github.com/tgangte/LocalCA/actions/workflows/django.yml)
