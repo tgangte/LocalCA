@@ -51,6 +51,8 @@ Run the following two commands on any directory on your linux terminal.
 wget https://raw.githubusercontent.com/tgangte/LocalCA/refs/heads/main/docker-compose-from-registry.yml
 docker compose up 
 ```
+Visit the IP address or 127.0.0.1 on your browser. The default username and password are _admin_ and _password_. Change this promptly upon deployment. 
+
 And the run the following command to manage the services:
 
 ```
