@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   web:
     build: .
@@ -7,6 +5,7 @@ services:
     volumes:
       - ./localca_project:/app
       - static_volume:/app/staticfiles
+      - db:/app/db
 
   nginx:
     build:
@@ -22,4 +21,7 @@ services:
 
 volumes:
   static_volume:
+  db: 
+
+  #sqlite db will be in /var/lib/docker/volumes/localca_db/_data 
 
