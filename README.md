@@ -84,4 +84,4 @@ python manage.py initadmin
 
 python manage.py runserver
 ```
-Build and deploy locally with the above instructions. Contributions are welcome! 
+Build and deploy locally with the above instructions. LocalCA is under active development and contributions are welcome!
