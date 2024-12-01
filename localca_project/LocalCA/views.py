@@ -29,12 +29,14 @@ def homepage(request):
 
     for root in roots:
         # Get intermediates signed by this root
-        intermediates = IntermediateCertificate.objects.filter(signed_by_root=root)
+        intermediates = IntermediateCertificate.objects.filter(
+            signed_by_root=root)
         intermediate_list = []
 
         for intermediate in intermediates:
             # Get leaves signed by this intermediate
-            leaves = LeafCertificate.objects.filter(signed_by_intermediate=intermediate)
+            leaves = LeafCertificate.objects.filter(
+                signed_by_intermediate=intermediate)
             intermediate_list.append(
                 {
                     "intermediate": intermediate,
@@ -73,7 +75,8 @@ def homepage(request):
 def download(request, serial_number):
     """
     View to download the public key of a certificate.
-    For leaf certificates, returns the full chain (Root -> Intermediate -> Leaf).
+    For leaf certificates, returns the chain in correct order (Leaf -> Intermediate).
+    Root is typically not included as it should be in the trust store.
     """
     # Try to find the certificate in any of the certificate models
     cert = None
@@ -89,15 +92,13 @@ def download(request, serial_number):
 
     # If it's a leaf certificate, create a chain
     if isinstance(cert, LeafCertificate):
-        # Build the chain from leaf to root
+        # Build the chain from leaf to intermediate
         intermediate = cert.signed_by_intermediate
-        root = intermediate.signed_by_root
 
-        # Concatenate the certificates in order (root -> intermediate -> leaf)
+        # Correct ordering: Leaf -> Intermediate
         chain = (
-            f"# Root CA Certificate\n{root.public_key}\n\n"
-            f"# Intermediate CA Certificate\n{intermediate.public_key}\n\n"
-            f"# Leaf Certificate\n{cert.public_key}"
+            f"{cert.public_key}"
+            f"{intermediate.public_key}"
         )
 
         response = HttpResponse(chain, content_type="text/plain")
@@ -117,8 +118,7 @@ def download(request, serial_number):
         performed_by=request.user if request.user.is_authenticated else None,
         details=(
             f"Downloaded {'certificate chain' if isinstance(cert, LeafCertificate) else 'certificate'} "
-            f"for: {cert_name if not isinstance(cert, LeafCertificate) else cert.common_name}"
-        ),
+            f"for: {cert_name if not isinstance(cert, LeafCertificate) else cert.common_name}"),
     )
 
     return response
@@ -137,9 +137,8 @@ def create_ca(request):
     )
 
     # Get only the user's root certificates for the dropdown
-    user_roots = RootCertificate.objects.filter(created_by=request.user).order_by(
-        "-created_at"
-    )
+    user_roots = RootCertificate.objects.filter(
+        created_by=request.user).order_by("-created_at")
 
     if request.method == "POST":
         form_type = request.POST.get("form_type")
@@ -170,7 +169,8 @@ def create_ca(request):
                     details=f"Created root certificate: {ca_name}",
                 )
 
-                messages.success(request, f"Root CA '{ca_name}' created successfully!")
+                messages.success(
+                    request, f"Root CA '{ca_name}' created successfully!")
                 return redirect("create_ca")
 
             except ValueError as e:
@@ -186,9 +186,7 @@ def create_ca(request):
                 id=root_id, created_by=request.user
             ).exists():
                 messages.error(
-                    request,
-                    "You can only sign intermediates with your own root certificates.",
-                )
+                    request, "You can only sign intermediates with your own root certificates.", )
                 return redirect("create_ca")
 
             validity_days = int(request.POST.get("validity_days"))
@@ -224,13 +222,12 @@ def create_ca(request):
                 )
 
                 messages.success(
-                    request,
-                    f"Intermediate CA '{intermediate_name}' created successfully!",
-                )
+                    request, f"Intermediate CA '{intermediate_name}' created successfully!", )
                 return redirect("create_ca")
 
             except ValueError as e:
-                messages.error(request, f"Error creating intermediate CA: {str(e)}")
+                messages.error(
+                    request, f"Error creating intermediate CA: {str(e)}")
 
     return render(
         request,
@@ -285,14 +282,17 @@ def create_intermediate(request):
             )
 
             messages.success(
-                request, f"Intermediate CA '{intermediate_name}' created successfully!"
-            )
+                request,
+                f"Intermediate CA '{intermediate_name}' created successfully!")
             return redirect("homepage")
 
         except ValueError as e:
-            messages.error(request, f"Error creating intermediate CA: {str(e)}")
+            messages.error(
+                request, f"Error creating intermediate CA: {str(e)}")
 
-    return render(request, "LocalCA/create_intermediate.html", {"roots": roots})
+    return render(request,
+                  "LocalCA/create_intermediate.html",
+                  {"roots": roots})
 
 
 @login_required
@@ -305,9 +305,8 @@ def create_leaf(request):
         created_by=request.user
     ).order_by("-created_at")
 
-    existing_leaves = LeafCertificate.objects.filter(created_by=request.user).order_by(
-        "-created_at"
-    )
+    existing_leaves = LeafCertificate.objects.filter(
+        created_by=request.user).order_by("-created_at")
 
     if request.method == "POST":
         try:
@@ -317,14 +316,16 @@ def create_leaf(request):
             intermediate_id = int(request.POST.get("intermediate_id"))
 
             # Process SANs
-            san_list = [san.strip() for san in san_input.split(",") if san.strip()]
+            san_list = [san.strip()
+                        for san in san_input.split(",") if san.strip()]
             # Always include common_name in the SAN list if not already present
             if common_name not in san_list:
                 san_list.insert(0, common_name)
 
             intermediate_cert = get_object_or_404(
-                IntermediateCertificate, id=intermediate_id, created_by=request.user
-            )
+                IntermediateCertificate,
+                id=intermediate_id,
+                created_by=request.user)
 
             ca_manager = CertificateAuthority()
             leaf_cert_data = ca_manager.create_leaf_certificate(
@@ -349,8 +350,7 @@ def create_leaf(request):
             )
 
             messages.success(
-                request, f"Leaf certificate '{common_name}' created successfully!"
-            )
+                request, f"Leaf certificate '{common_name}' created successfully!")
             # Log the action
             AuditLog.objects.create(
                 action="CREATE",
@@ -359,7 +359,8 @@ def create_leaf(request):
             )
             return redirect("create_leaf")
         except ValueError as e:
-            messages.error(request, f"Error creating leaf certificate: {str(e)}")
+            messages.error(
+                request, f"Error creating leaf certificate: {str(e)}")
 
     return render(
         request,
@@ -378,8 +379,7 @@ def revoke_certificate(request, cert_id):
 
         if RevokedCertificate.objects.filter(certificate=cert).exists():
             messages.warning(
-                request, f"Certificate '{cert.common_name}' is already revoked."
-            )
+                request, f"Certificate '{cert.common_name}' is already revoked.")
         else:
             RevokedCertificate.objects.create(
                 certificate=cert, reason="Revoked by admin"
@@ -393,8 +393,8 @@ def revoke_certificate(request, cert_id):
             )
 
             messages.success(
-                request, f"Leaf certificate '{cert.common_name}' revoked successfully!"
-            )
+                request,
+                f"Leaf certificate '{cert.common_name}' revoked successfully!")
 
     except ValueError as e:
         messages.error(request, f"Error revoking certificate: {str(e)}")
@@ -432,7 +432,9 @@ def download_private(request, serial_number):
         cert_name = cert.name
 
     # Prepare the response with the private key
-    response = HttpResponse(cert.private_key_encrypted, content_type="text/plain")
+    response = HttpResponse(
+        cert.private_key_encrypted,
+        content_type="text/plain")
     response["Content-Disposition"] = f"attachment; filename={cert_name}_private.pem"
 
     # Log the private key download
@@ -456,7 +458,8 @@ def change_password(request):
             user = form.save()
             # Update the session to prevent logging out
             update_session_auth_hash(request, user)
-            messages.success(request, "Your password was successfully updated!")
+            messages.success(
+                request, "Your password was successfully updated!")
             return redirect("homepage")
     else:
         form = PasswordChangeForm(request.user)
