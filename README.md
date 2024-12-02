@@ -48,10 +48,10 @@ The following commands can be used to manage the services:
 
 ```
 # To start the services in the background, -d runs it in detached (background) mode, so it frees up the terminal.  
-docker compose up -d
+docker compose -f docker-compose-from-registry.yml  up  
 
 # To stop the services
-docker compose down 
+docker compose -f docker-compose-from-registry.yml  down
 ```
 
 ### Local build and deploy with docker
