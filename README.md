@@ -40,7 +40,7 @@ Run the following two commands on any directory on your linux terminal to get Lo
 
 ```
 wget https://raw.githubusercontent.com/tgangte/LocalCA/refs/heads/main/docker-compose-from-registry.yml
-docker compose up 
+docker compose -f docker-compose-from-registry.yml up
 ```
 Visit the host's IP address or localhost IP [127.0.0.1](http://127.0.0.1/) on your browser. The default username and password are _admin_ and _password_. Change this promptly upon deployment. 
 
@@ -48,7 +48,7 @@ The following commands can be used to manage the services:
 
 ```
 # To start the services in the background, -d runs it in detached (background) mode, so it frees up the terminal.  
-docker compose -f docker-compose-from-registry.yml  up  
+docker compose -f docker-compose-from-registry.yml  up -d  
 
 # To stop the services
 docker compose -f docker-compose-from-registry.yml  down
