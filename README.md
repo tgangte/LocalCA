@@ -44,6 +44,14 @@ docker compose -f docker-compose-from-registry.yml up
 ```
 Visit the host's IP address or localhost IP [127.0.0.1](http://127.0.0.1/) on your browser. The default username and password are _admin_ and _password_. Change this promptly upon deployment.
 
+Alternatively, if you are on ARM architecture such as the Raspberry Pi or Apple Silicon (M1,M2,M3,M4 Mac etc) the you can use the  arm based docker files:
+```
+wget https://raw.githubusercontent.com/tgangte/LocalCA/refs/heads/main/docker-compose-from-registry-arm.yml
+docker compose -f docker-compose-from-registry-arm.yml up
+
+```
+This is the docker hub repository https://hub.docker.com/r/practicalsre/local-ca/tags 
+
 The following commands can be used to manage the services:
 
 ```
