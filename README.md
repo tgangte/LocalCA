@@ -69,6 +69,10 @@ sudo docker compose up --build
 # Once build is satisfactory, run these to push to docker hub
 docker build -t practicalsre/local-ca:latest .
 docker push practicalsre/local-ca
+
+# Build steps for nginx for arm image
+docker build -t practicalsre/local-ca-nginx:arm-latest -f Dockerfile.nginx .
+docker push practicalsre/local-ca-nginx:arm-latest   
 ```
 
 ### Development steps
