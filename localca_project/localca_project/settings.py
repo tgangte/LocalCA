@@ -135,3 +135,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = 'homepage'  # Where to redirect after successful login
 LOGOUT_REDIRECT_URL = 'homepage'  # Where to redirect after logout
 LOGIN_URL = 'login'  # Where to redirect if login is required
+CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS').split(",")
