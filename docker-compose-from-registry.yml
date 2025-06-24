@@ -6,6 +6,8 @@ services:
     volumes:
       - db:/app/db
       - static_volume:/app/staticfiles
+    environment:
+      - CSRF_TRUSTED_ORIGINS=http://127.0.0.1,http://localhost
     networks:
       - app_network
     command: >
