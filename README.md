@@ -42,6 +42,8 @@ Run the following two commands on any directory on your linux terminal to get Lo
 wget https://raw.githubusercontent.com/tgangte/LocalCA/refs/heads/main/docker-compose-from-registry.yml
 docker compose -f docker-compose-from-registry.yml up
 ```
+Note that if you are using a domain name or IP address to access, you need to add that in the CSRF section of docker-compose-from-registry.yml 
+
 Visit the host's IP address or localhost IP [127.0.0.1](http://127.0.0.1/) on your browser. The default username and password are _admin_ and _password_. Change this promptly upon deployment.
 
 Alternatively, if you are on ARM architecture such as the Raspberry Pi or Apple Silicon (M1,M2,M3,M4 Mac etc) the you can use the  arm based docker files:
