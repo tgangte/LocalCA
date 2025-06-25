@@ -7,4 +7,4 @@ python manage.py initadmin
 python manage.py collectstatic --noinput
 
 # Start Gunicorn
-exec gunicorn localca_project.wsgi --bind web:8000 --worker-class=gthread --threads=4
+exec gunicorn localca_project.wsgi --bind ${BIND_ADDRESS:-0.0.0.0:8000} --worker-class=gthread --threads=4
