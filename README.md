@@ -87,9 +87,9 @@ docker push practicalsre/local-ca-nginx:arm-latest
 ### Security
 
 The web login page and passwords are protected by django-admin and hashed respectively. I recommend creating and deploying HTTPS certs for the LocalCA nginx webserver itself. 
-The public and private keys are stored in the unencrypted db.sqlite3 database file, so access to this file must be restricted by hardening the host. 
+The public and private keys are stored in the unencrypted db.sqlite3 database file, so access to this file must be restricted and the host hardened. 
 
-Since the private keys are not encrypted, I only recommend hosting this internally. not on production or exposed to internet. 
+Since the private keys are not encrypted, I only recommend hosting this internally, not on production or exposed to internet. 
 
 ### Development steps
 ```bash
