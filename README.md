@@ -64,7 +64,7 @@ docker compose -f docker-compose-from-registry.yml  up -d
 docker compose -f docker-compose-from-registry.yml  down
 ```
 
-### Local build and deploy with docker
+### Local build and deploy with docker(only for developers)
 
 ```
 # Clone this repo
