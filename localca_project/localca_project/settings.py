@@ -117,7 +117,14 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = '/static/'
+# Support for reverse proxy with path prefix (e.g., /localca)
+# Set SCRIPT_NAME environment variable to the path prefix (e.g., /localca)
+FORCE_SCRIPT_NAME = os.environ.get('SCRIPT_NAME', None)
+if FORCE_SCRIPT_NAME:
+    STATIC_URL = FORCE_SCRIPT_NAME + '/static/'
+else:
+    STATIC_URL = '/static/'
+
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Add this since we have additional static files in our apps

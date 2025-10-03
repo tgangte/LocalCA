@@ -1,0 +1,80 @@
+version: "3.8"
+
+# Example Docker Compose configuration for deploying LocalCA behind Traefik3
+# with a path prefix (/localca)
+#
+# Prerequisites:
+# 1. Traefik must be configured and running
+# 2. The traefik-swarm-nw network must exist
+# 3. Update the domain name in the router rules below
+#
+# To use this configuration:
+# 1. Replace 'kilts-lab' with your actual domain name
+# 2. Set SCRIPT_NAME=/localca to enable path prefix support
+# 3. Update CSRF_TRUSTED_ORIGINS with your domain
+# 4. Deploy with: docker-compose -f docker-compose-traefik.yml up -d
+
+services:
+  web:
+    image: practicalsre/local-ca:latest
+    volumes:
+      - db:/app/db
+      - static_volume:/app/staticfiles
+    environment:
+      # IMPORTANT: Set SCRIPT_NAME to the path prefix you want to use
+      - SCRIPT_NAME=/localca
+      # Add your domain to CSRF_TRUSTED_ORIGINS
+      - CSRF_TRUSTED_ORIGINS=http://127.0.0.1,http://localhost,https://kilts-lab,https://kilts-lab/localca
+    networks:
+      - traefik-swarm-nw
+    command: >
+      sh -c "
+        python manage.py migrate &&
+        python manage.py initadmin &&
+        python manage.py collectstatic --noinput &&
+        exec gunicorn localca_project.wsgi --bind 0.0.0.0:8000 --worker-class=gthread --threads=4"
+    labels:
+      - "traefik.enable=true"
+      # Router for the main application
+      - "traefik.http.routers.localca.rule=Host(`kilts-lab`) && PathPrefix(`/localca`)"
+      - "traefik.http.routers.localca.tls=true"
+      - "traefik.http.routers.localca.entrypoints=websecure"
+      - "traefik.http.services.localca.loadbalancer.server.port=8000"
+      # Strip the /localca prefix before forwarding to the application
+      # Django's SCRIPT_NAME will add it back for URL generation
+      - "traefik.http.middlewares.localca-stripprefix.stripprefix.prefixes=/localca"
+      - "traefik.http.routers.localca.middlewares=localca-stripprefix"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  nginx:
+    image: nginx:alpine
+    volumes:
+      - static_volume:/usr/share/nginx/html/static:ro
+    networks:
+      - traefik-swarm-nw
+    labels:
+      - "traefik.enable=true"
+      # Router for static files
+      - "traefik.http.routers.localca-static.rule=Host(`kilts-lab`) && PathPrefix(`/localca/static`)"
+      - "traefik.http.routers.localca-static.tls=true"
+      - "traefik.http.routers.localca-static.entrypoints=websecure"
+      - "traefik.http.services.localca-static.loadbalancer.server.port=80"
+      # Strip /localca prefix for static files
+      - "traefik.http.middlewares.localca-static-strip.stripprefix.prefixes=/localca"
+      - "traefik.http.routers.localca-static.middlewares=localca-static-strip"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+volumes:
+  static_volume:
+  db:
+
+networks:
+  traefik-swarm-nw:
+    external: true
+    name: traefik-swarm-nw

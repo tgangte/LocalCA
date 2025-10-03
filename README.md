@@ -64,6 +64,16 @@ docker compose -f docker-compose-from-registry.yml  up -d
 docker compose -f docker-compose-from-registry.yml  down
 ```
 
+### Deploy Behind Reverse Proxy (Traefik, Nginx, etc.)
+
+LocalCA supports deployment behind reverse proxies with custom path prefixes. For example, to deploy at `https://yourdomain.com/localca`:
+
+1. Set the `SCRIPT_NAME` environment variable: `SCRIPT_NAME=/localca`
+2. Configure your reverse proxy to strip the path prefix before forwarding to LocalCA
+3. Add your domain to `CSRF_TRUSTED_ORIGINS`
+
+For detailed instructions on deploying behind Traefik, see [TRAEFIK_DEPLOYMENT.md](TRAEFIK_DEPLOYMENT.md) or use the included `docker-compose-traefik.yml` example configuration.
+
 ### Local build and deploy with docker(only for developers)
 
 ```
