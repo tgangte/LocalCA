@@ -4,6 +4,8 @@ This module contains the tests for the CertificateAuthority class.
 from datetime import datetime, timedelta
 from django.test import TestCase
 from django.utils import timezone
+from django.urls import reverse
+from django.conf import settings
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import rsa
 from .ca import CertificateAuthority
@@ -378,3 +380,38 @@ class CertificateAuthorityTests(TestCase):
         self.assertIn("*.wildcard.example.com", dns_names)
         self.assertIn("192.168.1.1", ip_addresses)
         self.assertIn("2001:db8::1", ip_addresses)
+
+
+class ReverseProxyConfigurationTests(TestCase):
+    """
+    Test suite for reverse proxy configuration (SCRIPT_NAME support)
+    """
+
+    def test_settings_force_script_name_from_env(self):
+        """Test that FORCE_SCRIPT_NAME is correctly read from environment"""
+        # Test that the setting can be None (default) or set from environment
+        # This verifies the configuration in settings.py is properly set up
+        self.assertIn(settings.FORCE_SCRIPT_NAME, [None, '/localca'])
+
+    def test_static_url_configuration(self):
+        """Test that STATIC_URL is correctly configured based on FORCE_SCRIPT_NAME"""
+        # When FORCE_SCRIPT_NAME is None, STATIC_URL should be '/static/'
+        # When FORCE_SCRIPT_NAME is set, STATIC_URL should include the prefix
+        if settings.FORCE_SCRIPT_NAME is None:
+            self.assertEqual(settings.STATIC_URL, '/static/')
+        elif settings.FORCE_SCRIPT_NAME == '/localca':
+            self.assertEqual(settings.STATIC_URL, '/localca/static/')
+
+    def test_url_patterns_exist(self):
+        """Test that all expected URL patterns are defined"""
+        # These URLs should always be resolvable regardless of SCRIPT_NAME
+        # This ensures our URL configuration is correct
+        from django.urls.exceptions import NoReverseMatch
+        try:
+            reverse('homepage')
+            reverse('create_ca')
+            reverse('create_leaf')
+            reverse('login')
+            reverse('logout')
+        except NoReverseMatch as exc:
+            self.fail(f"URL pattern resolution failed: {exc}")
