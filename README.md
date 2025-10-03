@@ -100,6 +100,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 cd localca_project
+export CSRF_TRUSTED_ORIGINS="http://localhost"
 python manage.py makemigrations LocalCA
 python manage.py migrate
 python manage.py initadmin
