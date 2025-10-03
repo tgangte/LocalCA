@@ -11,6 +11,7 @@ from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.serialization import pkcs12
 
 
 logger = logging.getLogger(__name__)
@@ -278,3 +279,54 @@ class CertificateAuthority:
             ca_private_key_obj,
             hashes.SHA256(),
             default_backend())
+
+    def create_pkcs12(
+            self,
+            cert_pem: str,
+            private_key_pem: str,
+            ca_cert_pem: str = None,
+            friendly_name: str = None) -> bytes:
+        """
+        Create a PKCS12 bundle containing the certificate and private key.
+        
+        Args:
+            cert_pem: PEM-encoded certificate
+            private_key_pem: PEM-encoded private key
+            ca_cert_pem: Optional PEM-encoded CA certificate for chain
+            friendly_name: Optional friendly name for the certificate
+            
+        Returns:
+            PKCS12 bundle as bytes
+        """
+        # Load the certificate
+        cert = x509.load_pem_x509_certificate(
+            cert_pem.encode(),
+            default_backend()
+        )
+
+        # Load the private key
+        private_key = serialization.load_pem_private_key(
+            private_key_pem.encode(),
+            password=None,
+            backend=default_backend()
+        )
+
+        # Load CA certificate if provided
+        ca_certs = []
+        if ca_cert_pem:
+            ca_cert = x509.load_pem_x509_certificate(
+                ca_cert_pem.encode(),
+                default_backend()
+            )
+            ca_certs.append(ca_cert)
+
+        # Create PKCS12 bundle
+        pkcs12_bundle = pkcs12.serialize_key_and_certificates(
+            name=friendly_name.encode() if friendly_name else None,
+            key=private_key,
+            cert=cert,
+            cas=ca_certs if ca_certs else None,
+            encryption_algorithm=serialization.NoEncryption()
+        )
+
+        return pkcs12_bundle

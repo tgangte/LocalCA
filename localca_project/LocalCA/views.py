@@ -448,6 +448,65 @@ def download_private(request, serial_number):
 
 
 @login_required
+def download_pkcs12(request, serial_number):
+    """
+    View to download a certificate and private key in PKCS12 format.
+    Only available for leaf certificates and only to the certificate owner.
+    """
+    # Try to find the certificate
+    cert = None
+    for model in [RootCertificate, IntermediateCertificate, LeafCertificate]:
+        try:
+            cert = model.objects.get(serial_number=serial_number)
+            break
+        except model.DoesNotExist:
+            continue
+
+    if not cert:
+        raise Http404("Certificate not found")
+
+    # Check if the user is the owner of the certificate
+    if cert.created_by != request.user:
+        messages.error(request, "You don't have permission")
+        raise PermissionDenied("You do not have permission")
+
+    # Get the appropriate name based on certificate type
+    if isinstance(cert, LeafCertificate):
+        cert_name = cert.common_name
+        # For leaf certificates, include the intermediate certificate in the chain
+        intermediate = cert.signed_by_intermediate
+        ca_cert_pem = intermediate.public_key
+    else:
+        cert_name = cert.name
+        ca_cert_pem = None
+
+    # Create PKCS12 bundle
+    ca_manager = CertificateAuthority()
+    pkcs12_bundle = ca_manager.create_pkcs12(
+        cert_pem=cert.public_key,
+        private_key_pem=cert.private_key_encrypted,
+        ca_cert_pem=ca_cert_pem,
+        friendly_name=cert_name
+    )
+
+    # Prepare the response with the PKCS12 bundle
+    response = HttpResponse(
+        pkcs12_bundle,
+        content_type="application/x-pkcs12"
+    )
+    response["Content-Disposition"] = f"attachment; filename={cert_name}.p12"
+
+    # Log the PKCS12 download
+    AuditLog.objects.create(
+        action="DOWNLOAD_PKCS12",
+        performed_by=request.user,
+        details=f"Downloaded PKCS12 bundle for certificate: {cert_name} (Serial: {cert.serial_number})",
+    )
+
+    return response
+
+
+@login_required
 def change_password(request):
     """
     View to change the user's password.
