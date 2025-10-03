@@ -37,6 +37,11 @@ urlpatterns = [
         views.download_private,
         name='download_private'),
 
+    path(
+        'download_pkcs12/<str:serial_number>/',
+        views.download_pkcs12,
+        name='download_pkcs12'),
+
     # Authentication URLs
     path('login/', auth_views.LoginView.as_view(
         template_name='admin/login.html',

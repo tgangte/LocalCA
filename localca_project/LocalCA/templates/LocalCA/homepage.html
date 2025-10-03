@@ -20,8 +20,11 @@
                             Download Public Key
                         </a>
                         {% if tree.is_owner %}
-                            <a href="{% url 'download_private' tree.root.serial_number %}" class="btn btn-sm btn-warning">
+                            <a href="{% url 'download_private' tree.root.serial_number %}" class="btn btn-sm btn-warning me-2">
                                 Download Private Key
+                            </a>
+                            <a href="{% url 'download_pkcs12' tree.root.serial_number %}" class="btn btn-sm btn-info">
+                                Download PKCS12
                             </a>
                         {% endif %}
                     </div>
@@ -50,8 +53,11 @@
                                         Download Public Key
                                     </a>
                                     {% if intermediate_data.is_owner %}
-                                        <a href="{% url 'download_private' intermediate_data.intermediate.serial_number %}" class="btn btn-sm btn-warning">
+                                        <a href="{% url 'download_private' intermediate_data.intermediate.serial_number %}" class="btn btn-sm btn-warning me-2">
                                             Download Private Key
+                                        </a>
+                                        <a href="{% url 'download_pkcs12' intermediate_data.intermediate.serial_number %}" class="btn btn-sm btn-info">
+                                            Download PKCS12
                                         </a>
                                     {% endif %}
                                 </div>
@@ -80,8 +86,11 @@
                                                     Download Public Chain
                                                 </a>
                                                 {% if leaf.is_owner %}
-                                                    <a href="{% url 'download_private' leaf.cert.serial_number %}" class="btn btn-sm btn-warning">
+                                                    <a href="{% url 'download_private' leaf.cert.serial_number %}" class="btn btn-sm btn-warning me-2">
                                                         Download Private Key
+                                                    </a>
+                                                    <a href="{% url 'download_pkcs12' leaf.cert.serial_number %}" class="btn btn-sm btn-info">
+                                                        Download PKCS12
                                                     </a>
                                                 {% endif %}
                                             </div>

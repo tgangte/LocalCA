@@ -378,3 +378,50 @@ class CertificateAuthorityTests(TestCase):
         self.assertIn("*.wildcard.example.com", dns_names)
         self.assertIn("192.168.1.1", ip_addresses)
         self.assertIn("2001:db8::1", ip_addresses)
+
+    def test_create_pkcs12(self):
+        """Test PKCS12 bundle creation"""
+        # Create a complete certificate chain
+        root_cert = self.ca.create_root_certificate("Root CA", 365)
+        intermediate = self.ca.create_intermediate_certificate(
+            common_name="Intermediate CA",
+            validity_days=365,
+            root_public_key=root_cert["public_key"],
+            root_private_key=root_cert["private_key"]
+        )
+        leaf = self.ca.create_leaf_certificate(
+            common_name="test.example.com",
+            san_list=["test.example.com"],
+            validity_days=90,
+            intermediate_public_key=intermediate["public_key"],
+            intermediate_private_key=intermediate["private_key"]
+        )
+
+        # Create PKCS12 bundle with CA certificate
+        pkcs12_bundle = self.ca.create_pkcs12(
+            cert_pem=leaf["public_key"],
+            private_key_pem=leaf["private_key"],
+            ca_cert_pem=intermediate["public_key"],
+            friendly_name="test.example.com"
+        )
+
+        # Verify it's a bytes object
+        self.assertIsInstance(pkcs12_bundle, bytes)
+        # PKCS12 files should not be empty
+        self.assertGreater(len(pkcs12_bundle), 0)
+
+    def test_create_pkcs12_without_ca_cert(self):
+        """Test PKCS12 bundle creation without CA certificate"""
+        root_cert = self.ca.create_root_certificate("Root CA", 365)
+
+        # Create PKCS12 bundle without CA certificate
+        pkcs12_bundle = self.ca.create_pkcs12(
+            cert_pem=root_cert["public_key"],
+            private_key_pem=root_cert["private_key"],
+            ca_cert_pem=None,
+            friendly_name="Root CA"
+        )
+
+        # Verify it's a bytes object
+        self.assertIsInstance(pkcs12_bundle, bytes)
+        self.assertGreater(len(pkcs12_bundle), 0)
