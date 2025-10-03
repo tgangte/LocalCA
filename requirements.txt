@@ -1,5 +1,5 @@
 Django==5.1.4
-cryptography==43.0.3
+cryptography==44.0.1
 gunicorn==23.0.0
 autopep8==2.3.1
 pylint==3.3.1
