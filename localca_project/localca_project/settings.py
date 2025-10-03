@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
+import sys
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -142,4 +143,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = 'homepage'  # Where to redirect after successful login
 LOGOUT_REDIRECT_URL = 'homepage'  # Where to redirect after logout
 LOGIN_URL = 'login'  # Where to redirect if login is required
-CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS').split(",")
+#CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS').split(",")
+
+CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS') #This will prevent the local deploys from breaking and set the default variable to localhost
+if not CSRF_TRUSTED_ORIGINS:
+    if DEBUG:
+        CSRF_TRUSTED_ORIGINS = ['localhost']
+    else:
+        sys.exit("CSRF_TRUSTED_ORIGINS environment variable must be set in production")
+
+CSRF_TRUSTED_ORIGINS = CSRF_TRUSTED_ORIGINS.split(",") if isinstance(CSRF_TRUSTED_ORIGINS, str) else CSRF_TRUSTED_ORIGINS
+
