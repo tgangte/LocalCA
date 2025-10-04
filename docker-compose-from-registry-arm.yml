@@ -6,6 +6,8 @@ services:
     volumes:
       - db:/app/db
       - static_volume:/app/staticfiles
+    environment:
+      - TZ=UTC
     networks:
       - app_network
     command: >
