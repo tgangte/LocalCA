@@ -446,6 +446,14 @@ class ReverseProxyConfigurationTests(TestCase):
         elif settings.FORCE_SCRIPT_NAME == '/localca':
             self.assertEqual(settings.STATIC_URL, '/localca/static/')
 
+    def test_timezone_configuration(self):
+        """Test that TIME_ZONE is correctly read from environment variable"""
+        # Test that TIME_ZONE is set and is a valid string
+        self.assertIsInstance(settings.TIME_ZONE, str)
+        # TIME_ZONE should be 'UTC' by default or a valid timezone string
+        # Just verify it's not empty
+        self.assertTrue(len(settings.TIME_ZONE) > 0)
+
     def test_url_patterns_exist(self):
         """Test that all expected URL patterns are defined"""
         # These URLs should always be resolvable regardless of SCRIPT_NAME

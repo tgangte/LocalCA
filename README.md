@@ -74,6 +74,26 @@ LocalCA supports deployment behind reverse proxies with custom path prefixes. Fo
 
 For detailed instructions on deploying behind Traefik, see [TRAEFIK_DEPLOYMENT.md](TRAEFIK_DEPLOYMENT.md) or use the included `docker-compose-traefik.yml` example configuration.
 
+### Configuration
+
+#### Timezone Configuration
+
+By default, LocalCA uses UTC timezone for all timestamps and certificate expiry dates. You can customize this by setting the `TZ` environment variable in your docker-compose file:
+
+```yaml
+environment:
+  - TZ=America/New_York  # Set to your desired timezone
+```
+
+Common timezone examples:
+- `UTC` (default)
+- `America/New_York`
+- `America/Los_Angeles`
+- `Europe/London`
+- `Asia/Tokyo`
+
+For a complete list of valid timezone names, see the [IANA Time Zone Database](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).
+
 ### Local build and deploy with docker(only for developers)
 
 ```

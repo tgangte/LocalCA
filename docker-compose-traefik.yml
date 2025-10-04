@@ -21,6 +21,7 @@ services:
       - db:/app/db
       - static_volume:/app/staticfiles
     environment:
+      - TZ=UTC
       # IMPORTANT: Set SCRIPT_NAME to the path prefix you want to use
       - SCRIPT_NAME=/localca
       # Add your domain to CSRF_TRUSTED_ORIGINS
