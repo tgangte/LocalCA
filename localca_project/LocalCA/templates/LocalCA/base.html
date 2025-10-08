@@ -81,6 +81,11 @@
                             </a>
                         </li>
                     {% endif %}
+                    <li class="nav-item">
+                        <button class="btn nav-link" id="darkModeToggle" title="Toggle dark mode">
+                            <i class="fas fa-moon"></i>
+                        </button>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -235,6 +240,69 @@
             --custom-success: #1c3127;    /* Muted green */
             --custom-info: #9dacbc;       /* Muted blue for info */
             --custom-secondary: #4a5568;  /* Muted gray */
+            
+            /* Light theme (default) */
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --card-bg: #ffffff;
+            --footer-bg: #f8f9fa;
+            --footer-text: #6c757d;
+            --border-color: #dee2e6;
+        }
+        
+        /* Dark theme */
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --text-color: #e0e0e0;
+            --card-bg: #2d2d2d;
+            --footer-bg: #0d0d0d;
+            --footer-text: #b0b0b0;
+            --border-color: #404040;
+        }
+        
+        /* Apply theme colors */
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border-color: var(--border-color);
+            color: var(--text-color);
+        }
+        
+        .card-body {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+        }
+        
+        .footer {
+            background-color: var(--footer-bg) !important;
+            color: var(--footer-text);
+        }
+        
+        .text-muted {
+            color: var(--footer-text) !important;
+        }
+        
+        .form-control, .form-select {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border-color: var(--border-color);
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+        }
+        
+        .table {
+            color: var(--text-color);
+        }
+        
+        .alert {
+            border-color: var(--border-color);
         }
 
         /* Override Bootstrap colors */
@@ -354,6 +422,47 @@
             background-color: rgba(255,255,255,0.1);
             border-radius: 0.25rem;
         }
+        
+        /* Dark mode toggle button styling */
+        #darkModeToggle {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        #darkModeToggle:hover {
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 0.25rem;
+        }
     </style>
+    
+    <script>
+        // Dark mode toggle functionality
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const htmlElement = document.documentElement;
+        
+        // Check for saved theme preference or default to light mode
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        
+        // Apply the saved theme on page load
+        if (currentTheme === 'dark') {
+            htmlElement.setAttribute('data-theme', 'dark');
+            darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        }
+        
+        // Toggle dark mode
+        darkModeToggle.addEventListener('click', function() {
+            const theme = htmlElement.getAttribute('data-theme');
+            
+            if (theme === 'dark') {
+                htmlElement.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+                darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            } else {
+                htmlElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+                darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            }
+        });
+    </script>
 </body>
 </html>
