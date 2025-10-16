@@ -68,7 +68,7 @@ docker compose -f docker-compose-from-registry.yml  down
 
 LocalCA supports deployment behind reverse proxies with custom path prefixes. For example, to deploy at `https://yourdomain.com/localca`:
 
-1. Set the `SCRIPT_NAME` environment variable: `SCRIPT_NAME=/localca`
+1. Set the `URL_PREFIX` environment variable: `URL_PREFIX=/localca`
 2. Configure your reverse proxy to strip the path prefix before forwarding to LocalCA
 3. Add your domain to `CSRF_TRUSTED_ORIGINS`
 

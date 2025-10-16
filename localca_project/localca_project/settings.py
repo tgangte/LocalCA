@@ -118,8 +118,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 # Support for reverse proxy with path prefix (e.g., /localca)
-# Set SCRIPT_NAME environment variable to the path prefix (e.g., /localca)
-FORCE_SCRIPT_NAME = os.environ.get('SCRIPT_NAME', None)
+# Set URL_PREFIX environment variable to the path prefix (e.g., /localca)
+# Note: We use URL_PREFIX instead of SCRIPT_NAME to avoid conflicts with WSGI's SCRIPT_NAME
+# When a reverse proxy strips the path prefix before forwarding to Django,
+# URL_PREFIX is used only for URL generation, not for request path validation
+FORCE_SCRIPT_NAME = os.environ.get('URL_PREFIX', None)
 if FORCE_SCRIPT_NAME:
     STATIC_URL = FORCE_SCRIPT_NAME + '/static/'
 else:
