@@ -10,7 +10,7 @@ version: "3.8"
 #
 # To use this configuration:
 # 1. Replace 'kilts-lab' with your actual domain name
-# 2. Set SCRIPT_NAME=/localca to enable path prefix support
+# 2. Set URL_PREFIX=/localca to enable path prefix support
 # 3. Update CSRF_TRUSTED_ORIGINS with your domain
 # 4. Deploy with: docker-compose -f docker-compose-traefik.yml up -d
 
@@ -22,8 +22,10 @@ services:
       - static_volume:/app/staticfiles
     environment:
       - TZ=UTC
-      # IMPORTANT: Set SCRIPT_NAME to the path prefix you want to use
-      - SCRIPT_NAME=/localca
+      # IMPORTANT: Set URL_PREFIX to the path prefix you want to use
+      # Use URL_PREFIX instead of SCRIPT_NAME to avoid WSGI conflicts when
+      # Traefik strips the prefix before forwarding requests
+      - URL_PREFIX=/localca
       # Add your domain to CSRF_TRUSTED_ORIGINS
       - CSRF_TRUSTED_ORIGINS=http://127.0.0.1,http://localhost,https://kilts-lab,https://kilts-lab/localca
     networks:
@@ -42,7 +44,7 @@ services:
       - "traefik.http.routers.localca.entrypoints=websecure"
       - "traefik.http.services.localca.loadbalancer.server.port=8000"
       # Strip the /localca prefix before forwarding to the application
-      # Django's SCRIPT_NAME will add it back for URL generation
+      # Django's URL_PREFIX setting will add it back for URL generation
       - "traefik.http.middlewares.localca-stripprefix.stripprefix.prefixes=/localca"
       - "traefik.http.routers.localca.middlewares=localca-stripprefix"
     deploy:

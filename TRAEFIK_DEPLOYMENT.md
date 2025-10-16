@@ -4,23 +4,25 @@ This guide explains how to deploy LocalCA behind a Traefik reverse proxy with a 
 
 ## Overview
 
-When deploying LocalCA behind a reverse proxy like Traefik with a path prefix, Django needs to be aware of this prefix to generate correct URLs for links, forms, and static files. This is accomplished using the `SCRIPT_NAME` environment variable.
+When deploying LocalCA behind a reverse proxy like Traefik with a path prefix, Django needs to be aware of this prefix to generate correct URLs for links, forms, and static files. This is accomplished using the `URL_PREFIX` environment variable.
 
 ## Key Concepts
 
-1. **SCRIPT_NAME**: This environment variable tells Django what URL prefix to use when generating URLs
+1. **URL_PREFIX**: This environment variable tells Django what URL prefix to use when generating URLs
 2. **Strip Prefix Middleware**: Traefik strips the path prefix before forwarding to Django
-3. **Django URL Generation**: With SCRIPT_NAME set, Django automatically prepends the prefix to all generated URLs
+3. **Django URL Generation**: With URL_PREFIX set, Django automatically prepends the prefix to all generated URLs
+
+Note: We use `URL_PREFIX` instead of `SCRIPT_NAME` to avoid conflicts with WSGI's `SCRIPT_NAME` environment variable, which is used for request path validation. When Traefik strips the prefix, the incoming request paths don't include the prefix, which would cause errors with WSGI's `SCRIPT_NAME` validation.
 
 ## Configuration Steps
 
-### 1. Set the SCRIPT_NAME Environment Variable
+### 1. Set the URL_PREFIX Environment Variable
 
-Add the `SCRIPT_NAME` environment variable to your LocalCA container:
+Add the `URL_PREFIX` environment variable to your LocalCA container:
 
 ```yaml
 environment:
-  - SCRIPT_NAME=/localca  # Set to your desired path prefix
+  - URL_PREFIX=/localca  # Set to your desired path prefix
   - CSRF_TRUSTED_ORIGINS=https://yourdomain.com,https://yourdomain.com/localca
 ```
 
@@ -85,8 +87,8 @@ See the included `docker-compose-traefik.yml` file for a complete working exampl
 **Symptom**: Getting 404 errors when accessing LocalCA through Traefik
 
 **Solutions**:
-1. Verify `SCRIPT_NAME` environment variable is set correctly (must start with `/`)
-2. Check that the Traefik path prefix matches the `SCRIPT_NAME` value
+1. Verify `URL_PREFIX` environment variable is set correctly (must start with `/`)
+2. Check that the Traefik path prefix matches the `URL_PREFIX` value
 3. Ensure the strip prefix middleware is configured correctly
 
 ### Problem: Links Don't Include the Prefix
@@ -94,7 +96,7 @@ See the included `docker-compose-traefik.yml` file for a complete working exampl
 **Symptom**: Generated URLs don't include `/localca` prefix
 
 **Solutions**:
-1. Verify `SCRIPT_NAME` environment variable is set in the container
+1. Verify `URL_PREFIX` environment variable is set in the container
 2. Check container logs to ensure Django is reading the environment variable
 3. Restart the container after changing environment variables
 
@@ -157,3 +159,17 @@ To force HTTPS, add these Traefik labels:
 - [Django FORCE_SCRIPT_NAME Documentation](https://docs.djangoproject.com/en/5.1/ref/settings/#force-script-name)
 - [Traefik PathPrefix Documentation](https://doc.traefik.io/traefik/routing/routers/#rule)
 - [Traefik StripPrefix Middleware](https://doc.traefik.io/traefik/middlewares/http/stripprefix/)
+
+## Why URL_PREFIX Instead of SCRIPT_NAME?
+
+In earlier versions, this guide recommended using the `SCRIPT_NAME` environment variable. However, this causes issues because:
+
+1. The WSGI specification uses `SCRIPT_NAME` to validate incoming request paths
+2. When Traefik strips the prefix (e.g., `/localca`), Django receives paths like `/` 
+3. Django's CommonMiddleware checks if the path starts with `os.environ['SCRIPT_NAME']`
+4. This validation fails with the error: "Request path '/' does not start with SCRIPT_NAME '/localca'"
+
+By using `URL_PREFIX` instead, we:
+- Avoid conflicts with WSGI's `SCRIPT_NAME` validation
+- Still get proper URL generation through Django's `FORCE_SCRIPT_NAME` setting
+- Allow Traefik to strip the prefix without causing errors
