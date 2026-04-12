@@ -452,6 +452,7 @@ def download_pkcs12(request, serial_number):
     """
     View to download a certificate and private key in PKCS12 format.
     Only available for leaf certificates and only to the certificate owner.
+    Accepts GET (no password) or POST (with optional p12_password field).
     """
     # Try to find the certificate
     cert = None
@@ -480,13 +481,20 @@ def download_pkcs12(request, serial_number):
         cert_name = cert.name
         ca_cert_pem = None
 
+    # Extract export password from POST data (empty string means no password)
+    password = None
+    if request.method == "POST":
+        raw_password = request.POST.get("p12_password", "").strip()
+        password = raw_password if raw_password else None
+
     # Create PKCS12 bundle
     ca_manager = CertificateAuthority()
     pkcs12_bundle = ca_manager.create_pkcs12(
         cert_pem=cert.public_key,
         private_key_pem=cert.private_key_encrypted,
         ca_cert_pem=ca_cert_pem,
-        friendly_name=cert_name
+        friendly_name=cert_name,
+        password=password,
     )
 
     # Prepare the response with the PKCS12 bundle
