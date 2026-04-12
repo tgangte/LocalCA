@@ -96,7 +96,7 @@ class CertificateAuthority:
             critical=True,
         ).add_extension(
             # KeyUsage allowing certificate signing and CRL signing
-            self.x509_usage, 
+            self.x509_usage,
             critical=True,
         ).add_extension(
         # Authority Key Identifier referencing self (root)
