@@ -285,16 +285,18 @@ class CertificateAuthority:
             cert_pem: str,
             private_key_pem: str,
             ca_cert_pem: str = None,
-            friendly_name: str = None) -> bytes:
+            friendly_name: str = None,
+            password: str = None) -> bytes:
         """
         Create a PKCS12 bundle containing the certificate and private key.
-        
+
         Args:
             cert_pem: PEM-encoded certificate
             private_key_pem: PEM-encoded private key
             ca_cert_pem: Optional PEM-encoded CA certificate for chain
             friendly_name: Optional friendly name for the certificate
-            
+            password: Optional export password to encrypt the PKCS12 bundle
+
         Returns:
             PKCS12 bundle as bytes
         """
@@ -321,12 +323,17 @@ class CertificateAuthority:
             ca_certs.append(ca_cert)
 
         # Create PKCS12 bundle
+        encryption_algorithm = (
+            serialization.BestAvailableEncryption(password.encode())
+            if password
+            else serialization.NoEncryption()
+        )
         pkcs12_bundle = pkcs12.serialize_key_and_certificates(
             name=friendly_name.encode() if friendly_name else None,
             key=private_key,
             cert=cert,
             cas=ca_certs if ca_certs else None,
-            encryption_algorithm=serialization.NoEncryption()
+            encryption_algorithm=encryption_algorithm
         )
 
         return pkcs12_bundle
