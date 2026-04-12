@@ -21,6 +21,19 @@ class CertificateAuthority:
     """
     A class to manage certificate generation, CSR creation, and signing.
     """
+    def __init__(self):
+        # KeyUsage for CA: allow signing certs and CRLs
+        # will be used for root and intermediate certs
+        self.x509_usage = x509.KeyUsage(
+                    digital_signature=True,
+                    key_encipherment=False,
+                    content_commitment=False,
+                    data_encipherment=False,
+                    key_agreement=False,
+                    key_cert_sign=True,
+                    crl_sign=True,
+                    encipher_only=False,
+                    decipher_only=False)
 
     def generate_private_key(self):
         """
@@ -57,12 +70,16 @@ class CertificateAuthority:
             x509.NameAttribute(NameOID.ORGANIZATION_NAME, "LocalCA"),
         ])
 
+        pubkey = private_key.public_key()
+        # Create Subject Key Identifier for this certificate
+        ski = x509.SubjectKeyIdentifier.from_public_key(pubkey)
+
         cert = x509.CertificateBuilder().subject_name(
             subject
         ).issuer_name(
             issuer
         ).public_key(
-            private_key.public_key()
+        pubkey
         ).serial_number(
             x509.random_serial_number()
         ).not_valid_before(
@@ -70,7 +87,21 @@ class CertificateAuthority:
         ).not_valid_after(
             datetime.utcnow() + timedelta(days=validity_days)
         ).add_extension(
-            x509.BasicConstraints(ca=True, path_length=None), critical=True,
+            # Subject Key Identifier for this certificate
+            ski,
+            critical=False,
+        ).add_extension(
+            # Basic constraints for a root CA
+            x509.BasicConstraints(ca=True, path_length=None),
+            critical=True,
+        ).add_extension(
+            # KeyUsage allowing certificate signing and CRL signing
+            self.x509_usage, 
+            critical=True,
+        ).add_extension(
+        # Authority Key Identifier referencing self (root)
+        x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ski),
+        critical=False,
         ).sign(private_key, hashes.SHA256(), default_backend())
 
         return {
@@ -111,7 +142,7 @@ class CertificateAuthority:
                 format=serialization.PrivateFormat.TraditionalOpenSSL,
                 encryption_algorithm=serialization.NoEncryption()).decode(),
             "valid_until": cert.not_valid_after_utc,
-        }
+            }
 
     def create_leaf_certificate(
             self,
@@ -130,7 +161,7 @@ class CertificateAuthority:
         intermediate_cert = x509.load_pem_x509_certificate(
             intermediate_public_key.encode(),
             default_backend()
-        )
+            )
 
         cert = self.sign_leaf_csr(
             csr,
@@ -147,7 +178,7 @@ class CertificateAuthority:
                 format=serialization.PrivateFormat.TraditionalOpenSSL,
                 encryption_algorithm=serialization.NoEncryption()).decode(),
             "valid_until": cert.not_valid_after_utc,
-        }
+            }
 
     def create_csr(
             self,
@@ -156,6 +187,9 @@ class CertificateAuthority:
         """
         Create a CSR for a certificate.
         """
+        if not common_name or not common_name.strip():
+            raise ValueError("Common name cannot be empty")
+
         csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
             x509.NameAttribute(NameOID.COMMON_NAME, common_name),
             x509.NameAttribute(NameOID.ORGANIZATION_NAME, "LocalCA"),
@@ -171,6 +205,9 @@ class CertificateAuthority:
         """
         Create a CSR for a leaf certificate with SANs.
         """
+        if san_list is None:
+            san_list = []
+
         # Create DNS names for all SANs
         san_objects = []
 
@@ -189,15 +226,31 @@ class CertificateAuthority:
                 san_objects.append(x509.DNSName(san))
 
         # Create the CSR with SANs
-        csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
+        builder = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
             x509.NameAttribute(NameOID.COMMON_NAME, common_name),
             x509.NameAttribute(NameOID.ORGANIZATION_NAME, "LocalCA"),
-        ])).add_extension(
+        ]))
+
+        if san_objects:
+            builder = builder.add_extension(
             x509.SubjectAlternativeName(san_objects),
             critical=False
-        ).sign(key, hashes.SHA256(), default_backend())
+            )
+
+        csr = builder.sign(key, hashes.SHA256(), default_backend())
 
         return csr
+
+    def _extract_issuer_ski_or_fallback(self, ca_cert: x509.Certificate) -> x509.SubjectKeyIdentifier:
+        """
+        Try to extract SubjectKeyIdentifier from ca_cert extensions; if absent,
+        derive one from the CA public key.
+        """
+        try:
+            ext = ca_cert.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
+            return ext.value
+        except x509.ExtensionNotFound:
+            return x509.SubjectKeyIdentifier.from_public_key(ca_cert.public_key())
 
     def sign_csr(
             self,
@@ -209,7 +262,12 @@ class CertificateAuthority:
         Sign a CSR with a CA's key to issue an intermediate certificate.
         """
         ca_private_key_obj = serialization.load_pem_private_key(
-            ca_private_key.encode(), password=None)
+        ca_private_key.encode(), password=None, backend=default_backend())
+
+        # Subject Key Identifier from the CSR public key
+        ski = x509.SubjectKeyIdentifier.from_public_key(csr.public_key())
+
+        issuer_ski = self._extract_issuer_ski_or_fallback(ca_cert)
 
         cert_builder = x509.CertificateBuilder().subject_name(
             csr.subject
@@ -223,6 +281,18 @@ class CertificateAuthority:
             datetime.utcnow()
         ).not_valid_after(
             datetime.utcnow() + timedelta(days=validity_days)
+        ).add_extension(
+            # Subject Key Identifier for the issued certificate
+            ski,
+            critical=False,
+        ).add_extension(
+            # Authority Key Identifier referencing issuer's subject key identifier
+            x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(issuer_ski),
+            critical=False,
+        ).add_extension(
+            # KeyUsage for CA: allow signing certs and CRLs
+            self.x509_usage,
+            critical=True,
         ).add_extension(
             x509.BasicConstraints(ca=True, path_length=None), critical=True,
         )
@@ -242,7 +312,12 @@ class CertificateAuthority:
         Sign a CSR with a CA's key to issue a leaf certificate.
         """
         ca_private_key_obj = serialization.load_pem_private_key(
-            ca_private_key.encode(), password=None)
+        ca_private_key.encode(), password=None, backend=default_backend())
+
+        # Subject Key Identifier for the leaf cert
+        ski = x509.SubjectKeyIdentifier.from_public_key(csr.public_key())
+
+        issuer_ski = self._extract_issuer_ski_or_fallback(ca_cert)
 
         builder = x509.CertificateBuilder().subject_name(
             csr.subject
@@ -267,6 +342,16 @@ class CertificateAuthority:
         except x509.ExtensionNotFound:
             logger.warning(
                 "SAN extension not found in CSR; proceeding without it.")
+
+        # Add SubjectKeyIdentifier and AuthorityKeyIdentifier
+        builder = builder.add_extension(
+            ski,
+            critical=False,
+        )
+        builder = builder.add_extension(
+            x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(issuer_ski),
+            critical=False,
+        )
 
         # Add BasicConstraints extension for a leaf certificate
         builder = builder.add_extension(
