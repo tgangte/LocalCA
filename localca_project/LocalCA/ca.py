@@ -7,7 +7,6 @@ import logging
 import ipaddress
 from datetime import datetime, timedelta, timezone
 
-import cryptography.x509.oid
 from cryptography import x509
 from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -369,15 +368,16 @@ class CertificateAuthority:
             critical=True)
 
         # Add server and client auth extensions if present
+        extended_key_usage = []
         if server_auth:
-            builder = builder.add_extension(
-                x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH]),
-                critical=False
-            )
+            extended_key_usage.append(x509.ExtendedKeyUsageOID.SERVER_AUTH)
 
         if client_auth:
+            extended_key_usage.append(x509.ExtendedKeyUsageOID.CLIENT_AUTH)
+
+        if len(extended_key_usage) > 0:
             builder = builder.add_extension(
-                x509.ExtendedKeyUsage([ExtendedKeyUsageOID.CLIENT_AUTH]),
+                x509.ExtendedKeyUsage(extended_key_usage),
                 critical=False
             )
 
