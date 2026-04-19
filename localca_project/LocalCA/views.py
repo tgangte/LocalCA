@@ -349,7 +349,7 @@ def create_leaf(request):
                 public_key=leaf_cert_data["public_key"],
                 private_key_encrypted=leaf_cert_data["private_key"],
                 signed_by_intermediate=intermediate_cert,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
                 created_by=request.user,
             )
 
