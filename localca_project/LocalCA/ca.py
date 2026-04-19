@@ -6,8 +6,10 @@ root, intermediate, and leaf certificates.
 import logging
 import ipaddress
 from datetime import datetime, timedelta, timezone
+
+import cryptography.x509.oid
 from cryptography import x509
-from cryptography.x509.oid import NameOID
+from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.backends import default_backend
@@ -33,9 +35,7 @@ class CertificateAuthority:
                     key_cert_sign=True,
                     crl_sign=True,
                     encipher_only=False,
-                    decipher_only=False,
-                    server_auth=False,
-                    client_auth=False)
+                    decipher_only=False,)
 
     def generate_private_key(self):
         """
@@ -371,13 +371,13 @@ class CertificateAuthority:
         # Add server and client auth extensions if present
         if server_auth:
             builder = builder.add_extension(
-                x509.ExtendedKeyUsageOID.SERVER_AUTH,
+                x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH]),
                 critical=False
             )
 
         if client_auth:
             builder = builder.add_extension(
-                x509.ExtendedKeyUsageOID.CLIENT_AUTH,
+                x509.ExtendedKeyUsage([ExtendedKeyUsageOID.CLIENT_AUTH]),
                 critical=False
             )
 
