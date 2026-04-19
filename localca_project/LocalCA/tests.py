@@ -2,6 +2,9 @@
 This module contains the tests for the CertificateAuthority class.
 '''
 from datetime import datetime, timedelta
+
+from cryptography.hazmat._oid import ExtendedKeyUsageOID
+from cryptography.x509 import ExtensionNotFound
 from django.test import TestCase
 from django.utils import timezone
 from django.urls import reverse
@@ -226,6 +229,8 @@ class CertificateAuthorityTests(TestCase):
             common_name="test.example.com",
             san_list=san_list,
             validity_days=90,
+            server_auth=False,
+            client_auth=False,
             intermediate_public_key=intermediate["public_key"],
             intermediate_private_key=intermediate["private_key"]
         )
@@ -277,6 +282,8 @@ class CertificateAuthorityTests(TestCase):
             common_name="test.example.com",
             san_list=["test.example.com"],
             validity_days=90,
+            server_auth=False,
+            client_auth=False,
             intermediate_public_key=intermediate["public_key"],
             intermediate_private_key=intermediate["private_key"]
         )
@@ -307,6 +314,8 @@ class CertificateAuthorityTests(TestCase):
             common_name="test.example.com",
             san_list=["test.example.com"],
             validity_days=90,
+            server_auth=False,
+            client_auth=False,
             intermediate_public_key=intermediate["public_key"],
             intermediate_private_key=intermediate["private_key"]
         )
@@ -317,6 +326,84 @@ class CertificateAuthorityTests(TestCase):
         basic_constraints = leaf_cert_obj.extensions.get_extension_for_class(
             x509.BasicConstraints)
         self.assertFalse(basic_constraints.value.ca)
+
+    def test_leaf_certificate_server_auth(self):
+        """Test that leaf certificates cannot be CA certificates"""
+        root_cert = self.ca.create_root_certificate("Root CA", 365)
+        intermediate = self.ca.create_intermediate_certificate(
+            common_name="Intermediate CA",
+            validity_days=365,
+            root_public_key=root_cert["public_key"],
+            root_private_key=root_cert["private_key"]
+        )
+
+        leaf = self.ca.create_leaf_certificate(
+            common_name="test-server.example.com",
+            san_list=["test-server.example.com"],
+            validity_days=90,
+            server_auth=True,
+            client_auth=False,
+            intermediate_public_key=intermediate["public_key"],
+            intermediate_private_key=intermediate["private_key"]
+        )
+
+        # Load leaf certificate and check BasicConstraints
+        leaf_cert_obj = x509.load_pem_x509_certificate(
+            leaf["public_key"].encode())
+        extended_key_usages = leaf_cert_obj.extensions.get_extension_for_class(x509.ExtendedKeyUsage)
+        self.assertEqual(extended_key_usages.value, x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH]))
+
+    def test_leaf_certificate_client_auth(self):
+        """Test that leaf certificates cannot be CA certificates"""
+        root_cert = self.ca.create_root_certificate("Root CA", 365)
+        intermediate = self.ca.create_intermediate_certificate(
+            common_name="Intermediate CA",
+            validity_days=365,
+            root_public_key=root_cert["public_key"],
+            root_private_key=root_cert["private_key"]
+        )
+
+        leaf = self.ca.create_leaf_certificate(
+            common_name="test-client.example.com",
+            san_list=["test-client.example.com"],
+            validity_days=90,
+            server_auth=False,
+            client_auth=True,
+            intermediate_public_key=intermediate["public_key"],
+            intermediate_private_key=intermediate["private_key"]
+        )
+
+        # Load leaf certificate and check auths
+        leaf_cert_obj = x509.load_pem_x509_certificate(
+            leaf["public_key"].encode())
+        extended_key_usages = leaf_cert_obj.extensions.get_extension_for_class(x509.ExtendedKeyUsage)
+        self.assertEqual(extended_key_usages.value, x509.ExtendedKeyUsage([ExtendedKeyUsageOID.CLIENT_AUTH]))
+
+    def test_leaf_certificate_client_server_auth(self):
+        """Test that leaf certificates cannot be CA certificates"""
+        root_cert = self.ca.create_root_certificate("Root CA", 365)
+        intermediate = self.ca.create_intermediate_certificate(
+            common_name="Intermediate CA",
+            validity_days=365,
+            root_public_key=root_cert["public_key"],
+            root_private_key=root_cert["private_key"]
+        )
+
+        leaf = self.ca.create_leaf_certificate(
+            common_name="test-client-server.example.com",
+            san_list=["test-client-server.example.com"],
+            validity_days=90,
+            server_auth=True,
+            client_auth=True,
+            intermediate_public_key=intermediate["public_key"],
+            intermediate_private_key=intermediate["private_key"]
+        )
+
+        # Load leaf certificate and check auths
+        leaf_cert_obj = x509.load_pem_x509_certificate(
+            leaf["public_key"].encode())
+        extended_key_usages = leaf_cert_obj.extensions.get_extension_for_class(x509.ExtendedKeyUsage)
+        self.assertEqual(extended_key_usages.value, x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH, ExtendedKeyUsageOID.CLIENT_AUTH]))
 
     def test_create_leaf_certificate_with_invalid_inputs(self):
         """Test leaf certificate creation with invalid inputs"""
@@ -334,6 +421,8 @@ class CertificateAuthorityTests(TestCase):
                 common_name="",
                 san_list=["test.example.com"],
                 validity_days=90,
+                server_auth=False,
+                client_auth=False,
                 intermediate_public_key=intermediate["public_key"],
                 intermediate_private_key=intermediate["private_key"]
             )
@@ -360,6 +449,8 @@ class CertificateAuthorityTests(TestCase):
             common_name="test.example.com",
             san_list=san_list,
             validity_days=90,
+            server_auth=False,
+            client_auth=False,
             intermediate_public_key=intermediate["public_key"],
             intermediate_private_key=intermediate["private_key"]
         )
@@ -394,6 +485,8 @@ class CertificateAuthorityTests(TestCase):
             common_name="test.example.com",
             san_list=["test.example.com"],
             validity_days=90,
+            server_auth=False,
+            client_auth=False,
             intermediate_public_key=intermediate["public_key"],
             intermediate_private_key=intermediate["private_key"]
         )

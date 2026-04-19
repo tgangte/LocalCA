@@ -78,6 +78,20 @@
                             <div class="form-text">Number of days the certificate will be valid (max 825 days)</div>
                         </div>
 
+                        <!-- Usage -->
+                        <div class="mb-4">
+                            <label for="usage" class="form-label fw-bold">Key Usage</label>
+                            <br>
+                            <input type="checkbox" 
+                                   id="server_auth" 
+                                   name="server_auth"> Server Auth
+                            <br>
+                            <input type="checkbox" 
+                                   id="client_auth" 
+                                   name="client_auth"> Client Auth
+                            <div class="form-text">Can be used to limit possible uses. Increasingly required by browsers and services.</div>
+                        </div>
+
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-success btn-lg" {% if not intermediates %}disabled{% endif %}>
                                 Create Leaf Certificate

@@ -5,9 +5,10 @@ root, intermediate, and leaf certificates.
 
 import logging
 import ipaddress
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+
 from cryptography import x509
-from cryptography.x509.oid import NameOID
+from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.backends import default_backend
@@ -33,7 +34,7 @@ class CertificateAuthority:
                     key_cert_sign=True,
                     crl_sign=True,
                     encipher_only=False,
-                    decipher_only=False)
+                    decipher_only=False,)
 
     def generate_private_key(self):
         """
@@ -83,9 +84,9 @@ class CertificateAuthority:
         ).serial_number(
             x509.random_serial_number()
         ).not_valid_before(
-            datetime.utcnow()
+            datetime.now(timezone.utc)
         ).not_valid_after(
-            datetime.utcnow() + timedelta(days=validity_days)
+            datetime.now(timezone.utc) + timedelta(days=validity_days)
         ).add_extension(
             # Subject Key Identifier for this certificate
             ski,
@@ -149,6 +150,8 @@ class CertificateAuthority:
             common_name: str,
             san_list: list,
             validity_days: int,
+            server_auth: bool,
+            client_auth: bool,
             intermediate_public_key: str,
             intermediate_private_key: str) -> dict:
         """
@@ -166,6 +169,8 @@ class CertificateAuthority:
         cert = self.sign_leaf_csr(
             csr,
             validity_days,
+            server_auth,
+            client_auth,
             intermediate_cert,
             intermediate_private_key)
 
@@ -278,9 +283,9 @@ class CertificateAuthority:
         ).serial_number(
             x509.random_serial_number()
         ).not_valid_before(
-            datetime.utcnow()
+            datetime.now(timezone.utc)
         ).not_valid_after(
-            datetime.utcnow() + timedelta(days=validity_days)
+            datetime.now(timezone.utc) + timedelta(days=validity_days)
         ).add_extension(
             # Subject Key Identifier for the issued certificate
             ski,
@@ -306,6 +311,8 @@ class CertificateAuthority:
             self,
             csr: x509.CertificateSigningRequest,
             validity_days: int,
+            server_auth: bool,
+            client_auth: bool,
             ca_cert: x509.Certificate,
             ca_private_key: str) -> x509.Certificate:
         """
@@ -328,9 +335,9 @@ class CertificateAuthority:
         ).serial_number(
             x509.random_serial_number()
         ).not_valid_before(
-            datetime.utcnow()
+            datetime.now(timezone.utc)
         ).not_valid_after(
-            datetime.utcnow() + timedelta(days=validity_days)
+            datetime.now(timezone.utc) + timedelta(days=validity_days)
         )
 
         # Add SAN extension if present in the CSR
@@ -359,6 +366,20 @@ class CertificateAuthority:
                 ca=False,
                 path_length=None),
             critical=True)
+
+        # Add server and client auth extensions if present
+        extended_key_usage = []
+        if server_auth:
+            extended_key_usage.append(x509.ExtendedKeyUsageOID.SERVER_AUTH)
+
+        if client_auth:
+            extended_key_usage.append(x509.ExtendedKeyUsageOID.CLIENT_AUTH)
+
+        if len(extended_key_usage) > 0:
+            builder = builder.add_extension(
+                x509.ExtendedKeyUsage(extended_key_usage),
+                critical=False
+            )
 
         return builder.sign(
             ca_private_key_obj,
