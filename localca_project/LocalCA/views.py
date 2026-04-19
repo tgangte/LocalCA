@@ -314,6 +314,8 @@ def create_leaf(request):
             san_input = request.POST.get("san", "").strip()
             validity_days = int(request.POST.get("validity_days"))
             intermediate_id = int(request.POST.get("intermediate_id"))
+            server_auth = bool(request.POST.get("server_auth"))
+            client_auth = bool(request.POST.get("client_auth"))
 
             # Process SANs
             san_list = [san.strip()
@@ -332,6 +334,8 @@ def create_leaf(request):
                 common_name=common_name,
                 san_list=san_list,  # Pass the complete list of SANs
                 validity_days=validity_days,
+                server_auth=server_auth,
+                client_auth=client_auth,
                 intermediate_public_key=intermediate_cert.public_key,
                 intermediate_private_key=intermediate_cert.private_key_encrypted,
             )
